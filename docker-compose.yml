@@ -1,0 +1,60 @@
+version: '3'
+
+services:
+    balancer:
+        image: dockercloud/haproxy
+        ports: 
+          - 81:80
+          - 1936:1936
+        links:      
+          - wordpress
+        networks:
+          - frontend-network
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+
+    mysql:
+        image: mysql:5.7.28
+        ports:
+          - 3306:3306
+        environment:
+          - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+          - MYSQL_DATABASE=${MYSQL_DATABASE}
+          - MYSQL_USER=${MYSQL_USER}
+          - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+        volumes:
+          - mysql_data:/var/lib/mysql
+        networks:
+          - backend-network
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        ports:
+          - 8080:80
+        environment: 
+          - PMA_HOST=msyql
+        depends_on:
+          - mysql
+        networks:
+          - frontend-network
+          - backend-network
+
+    wordpress:
+        image: wordpress
+        environment: 
+          - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST}
+          - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+          - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+          - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+        volumes:
+          - wordpress:/var/www/html
+        networks:
+          - frontend-network
+
+volumes: 
+    mysql_data:
+    wordpress:
+
+networks:
+     frontend-network:
+     backend-network:
